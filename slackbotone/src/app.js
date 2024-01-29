@@ -24,21 +24,25 @@ switch (process.env.LOG_LEVEL) {
 
 const app = new App({
     token: CONFIG.SLACK_BOT_TOKEN,
-    // signingSecret: CONFIG.SLACK_SIGNING_SECRET,
+    signingSecret: CONFIG.SLACK_SIGNING_SECRET,
     socketMode: true,
     appToken: CONFIG.SLACK_APP_LEVEL_TOKEN,
     logLevel,
 });
 
-app.event("message", async ({ event, client }) => {
-    console.log({ event, client });
-    const question = event.text;
-    const answer = "Your generated answer";
-
-    await client.chat.postMessage({
-        channel: event.channel,
-        text: answer,
-    });
+app.command("/square", async ({ command, ack, say }) => {
+    try {
+        await ack();
+        let txt = command.text; // The inputted parameters
+        if (isNaN(txt)) {
+            say(txt + " is not a number");
+        } else {
+            say(txt + " squared = " + parseFloat(txt) * parseFloat(txt));
+        }
+    } catch (error) {
+        console.log("err");
+        console.error(error);
+    }
 });
 
 (async () => {
