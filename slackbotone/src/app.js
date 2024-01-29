@@ -1,7 +1,10 @@
 require("dotenv").config();
+const fs = require('fs')
 const { App, LogLevel } = require("@slack/bolt");
-// const { WebClient } = require("@slack/web-api");
 const CONFIG = require("./config");
+
+let raw = fs.readFileSync('src/db.json');
+let faqs= JSON.parse(raw);
 
 
 let logLevel;
@@ -39,6 +42,58 @@ app.command("/square", async ({ command, ack, say }) => {
         } else {
             say(txt + " squared = " + parseFloat(txt) * parseFloat(txt));
         }
+    } catch (error) {
+        console.log("err");
+        console.error(error);
+    }
+});
+
+app.command("/knowledge", async ({ command, ack, say }) => {
+    try {
+        await ack();
+        let message = { blocks: [] };
+        faqs.data.map((faq) => {
+            message.blocks.push(
+                {
+                    type: "section",
+                    text: {
+                        type: "mrkdwn",
+                        text: "*Question*",
+                    },
+                },
+                {
+                    type: "section",
+                    text: {
+                        type: "mrkdwn",
+                        text: faq.question,
+                    },
+                },
+                {
+                    type: "section",
+                    text: {
+                        type: "mrkdwn",
+                        text: "*Answer*",
+                    },
+                },
+                {
+                    type: "section",
+                    text: {
+                        type: "mrkdwn",
+                        text: faq.answer,
+                    },
+                }
+            );
+        });
+        say(message);
+    } catch (error) {
+        console.log("err");
+        console.error(error);
+    }
+});
+
+app.message("hello", async ({ command, say }) => {
+    try {
+        say("Hi! Thanks for PM'ing me!");
     } catch (error) {
         console.log("err");
         console.error(error);
