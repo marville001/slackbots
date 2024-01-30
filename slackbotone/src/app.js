@@ -1,5 +1,6 @@
 require("dotenv").config();
 const fs = require('fs')
+const axios = require('axios')
 const { App, LogLevel } = require("@slack/bolt");
 const CONFIG = require("./config");
 
@@ -32,6 +33,66 @@ const app = new App({
     appToken: CONFIG.SLACK_APP_LEVEL_TOKEN,
     logLevel,
 });
+
+const BOT_CHANNEL = "bot_tests";
+
+function inspireMe() {
+    axios
+        .get(
+            "https://raw.githubusercontent.com/BolajiAyodeji/inspireNuggets/master/src/quotes.json"
+        )
+        .then((res) => {
+            const quotes = res.data;
+            const random = Math.floor(Math.random() * quotes.length);
+            const quote = quotes[random].quote;
+            const author = quotes[random].author;
+
+            const params = {
+                icon_emoji: ":male-technologist:",
+            };
+
+
+            app.postMessageToChannel(
+                BOT_CHANNEL,
+                `:zap: ${quote} - *${author}*`,
+                params
+            );
+        });
+}
+
+function randomJoke() {
+    axios.get("https://api.chucknorris.io/jokes/random").then((res) => {
+        const joke = res.data.value;
+
+        const params = {
+            icon_emoji: ":smile:",
+        };
+
+        app.postMessageToChannel(BOT_CHANNEL, `:zap: ${joke}`, params);
+    });
+}
+
+function runHelp() {
+    const params = {
+        icon_emoji: ":question:",
+    };
+
+    app.postMessageToChannel(
+        BOT_CHANNEL,
+        `Type *@inspirenuggets* with *inspire me* to get an inspiring techie quote, *random joke* to get a Chuck Norris random joke and *help* to get this instruction again`,
+        params
+    );
+}
+
+function handleMessage(message) {
+    if (message.includes(" inspire me")) {
+        inspireMe();
+    } else if (message.includes(" random joke")) {
+        randomJoke();
+    } else if (message.includes(" help")) {
+        runHelp();
+    }
+}
 
 app.command("/square", async ({ command, ack, say }) => {
     try {
@@ -85,6 +146,17 @@ app.command("/knowledge", async ({ command, ack, say }) => {
             );
         });
         say(message);
+    } catch (error) {
+        console.log("err");
+        console.error(error);
+    }
+});
+
+app.event('message', async ({ event, client }) => {
+    try {
+        console.log(event, client)
+        let message = event.text;
+        handleMessage(message);
     } catch (error) {
         console.log("err");
         console.error(error);
